@@ -24,10 +24,15 @@ abstract contract GovernableRelayer {
     }
 
 
-    function executeCrosschainProposal(uint256 proposalId) public payable {
-        bytes memory payload = abi.encode(greeting, msg.sender);
+    /// @dev inherited by L2 Govenor
+    function _executeCrosschainProposal(uint256 proposalId, address[] calldata targets, uint2256[] values, bytes[] calldata targetCallDatas) internal payable {
+
         uint256 cost = getQuote(targetChain);
         require(msg.value == cost, "Incorrect payment");
+
+        bytes memory payload = abi.encode(proposalId, targets, values, targetCalldatas);
+
+        // propsalId + calldata
         wormholeRelayer.sendPayloadToEvm{value: cost}(
             targetChain,
             vault,
