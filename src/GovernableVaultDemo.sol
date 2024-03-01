@@ -30,6 +30,7 @@ contract GovernableVaultDemo is IWormholeReceiver {
             revert InvalidGovernance();
         }  
         owner = msg.sender;
+        governance = _governance;
         governanceSourceChain = _governanceSourceChain;
         wormholeRelayer = IWormholeRelayer(_wormholeRelayer);
     }
@@ -45,6 +46,7 @@ contract GovernableVaultDemo is IWormholeReceiver {
         if (sourceChain != governanceSourceChain) {
             revert InvalidSourceChain();
         }
+        _;
     }
     
     modifier onlyOwner() {
@@ -60,7 +62,7 @@ contract GovernableVaultDemo is IWormholeReceiver {
         bytes32, // address that called 'sendPayloadToEvm'
         uint16 sourceChain,
         bytes32 // unique identifier of delivery
-    ) public payable override onlyRelayer onlySourceChain(sourceChain) {
+    ) public payable override onlyRelayer onlyGovernanceChain(sourceChain) {
 
         // Parse the payload and do the corresponding actions!
         (string memory greeting, address sender) = abi.decode(payload, (string, address));
