@@ -9,7 +9,7 @@ abstract contract GovernableRelayer {
 
     uint256 constant GAS_LIMIT = 1_000_000;
 
-    constructor(address _wormholeRelayer, address _removeVault, uint16 _targetChain, address _vault) {
+    constructor(address _wormholeRelayer, uint16 _targetChain, address _vault) {
         // TODO: checks
         wormholeRelayer = IWormholeRelayer(_wormholeRelayer);
         vault = _vault;
@@ -25,7 +25,7 @@ abstract contract GovernableRelayer {
 
 
     /// @dev inherited by L2 Govenor
-    function _executeCrosschainProposal(uint256 proposalId, address[] calldata targets, uint256[] calldata values, bytes[] calldata targetCallDatas) internal {
+    function _executeCrosschainProposal(uint256 proposalId, address[] memory targets, uint256[] memory values, bytes[] memory targetCallDatas) internal {
 
         uint256 cost = getQuote();
         require(msg.value == cost, "Incorrect payment");
