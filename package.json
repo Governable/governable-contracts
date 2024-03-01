@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "solidity-rlp": "^2.0.8"
+  }
+}

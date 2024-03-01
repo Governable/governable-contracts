@@ -17,6 +17,13 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Use Node.js 16.x
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16.x
+      - name: Install Dependencies
+        run: yarn install
+
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
         with:
@@ -25,7 +32,7 @@ jobs:
       - name: Run Forge build
         run: |
           forge --version
-          forge build --sizes
+          forge build --sizes --via-ir
         id: build
 
       - name: Run Forge tests
