@@ -76,32 +76,45 @@ library Tx {
         address from; // calculate from V R S
     }
 
+    struct Signature {
+        uint8 v;
+        bytes32 r;
+        bytes32 s;
+    }
+
     // support DynamicFeeTxType for now
     function decodeTx(bytes calldata txRaw) public pure returns (TxInfo memory info) {
         uint8 txType = uint8(txRaw[0]);
         require(txType == 2, "not a DynamicFeeTxType");
+        Signature memory sig;
+        
+        {
+            bytes memory rlpData = txRaw[1:];
+            RLPReader.RLPItem[] memory values = rlpData.toRlpItem().toList();
+            info.chainId = uint64(values[0].toUint());
+            info.nonce = uint64(values[1].toUint());
+            info.gasTipCap = values[2].toUint();
+            info.gasFeeCap = values[3].toUint();
+            info.gas = values[4].toUint();
+            info.to = values[5].toAddress();
+            info.value = values[6].toUint();
+            info.data = values[7].toBytes();
+            (sig.v, sig.r, sig.s) = (
+                uint8(values[9].toUint()),
+                bytes32(values[10].toBytes()),
+                bytes32(values[11].toBytes())
+            );
+        }
+        
 
-        bytes memory rlpData = txRaw[1:];
-        RLPReader.RLPItem[] memory values = rlpData.toRlpItem().toList();
-        info.chainId = uint64(values[0].toUint());
-        info.nonce = uint64(values[1].toUint());
-        info.gasTipCap = values[2].toUint();
-        info.gasFeeCap = values[3].toUint();
-        info.gas = values[4].toUint();
-        info.to = values[5].toAddress();
-        info.value = values[6].toUint();
-        info.data = values[7].toBytes();
-
-        (uint8 v, bytes32 r, bytes32 s) = (
-            uint8(values[9].toUint()),
-            bytes32(values[10].toBytes()),
-            bytes32(values[11].toBytes())
-        );
         // remove r,s,v and adjust length field
         bytes memory unsignedTxRaw;
         uint16 unsignedTxRawDataLength;
-        uint8 prefix = uint8(txRaw[1]);
-        uint8 lenBytes = prefix - 0xf7; // assume lenBytes won't larger than 2, means the tx rlp data size won't exceed 2^16
+        uint8 lenBytes;
+        {
+            uint8 prefix = uint8(txRaw[1]);
+            lenBytes = prefix - 0xf7; // assume lenBytes won't larger than 2, means the tx rlp data size won't exceed 2^16
+        }
         if (lenBytes == 1) {
             unsignedTxRawDataLength = uint8(bytes1(txRaw[2:3])) - 67; //67 is the bytes of r,s,v
         } else {
@@ -127,7 +140,7 @@ library Tx {
                 );
             }
         }
-        info.from = recover(keccak256(unsignedTxRaw), r, s, v);
+        info.from = recover(keccak256(unsignedTxRaw), sig.r, sig.s, sig.v);
     }
 
     function recover(bytes32 message, bytes32 r, bytes32 s, uint8 v) internal pure returns (address) {
