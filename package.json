@@ -1,5 +1,9 @@
 {
   "dependencies": {
     "solidity-rlp": "^2.0.8"
+  },
+  "scripts": {
+    "deploy:sepolia": "forge script script/DeployGovernance.s.sol --rpc-url $SEPOLIA_RPC_URL --broadcast --verify -vvvv  --private-key $PRIVATE_KEY --etherscan-api-key $ETHERSCAN_API_KEY",
+    "deploy:moonbeam": "forge script script/DeployExecutor.s.sol --rpc-url $MOONBEAN_RPC_URL --broadcast --verify -vvvv  --private-key $PRIVATE_KEY --etherscan-api-key $MOONSCAN_API_KEY"
   }
 }

@@ -405,7 +405,7 @@ contract Governor is GovernorStorage, GovernorEvents, BrevisApp, GovernableRelay
         address[] storage pendingVotes = pendingVoters[proposalId];
         for(uint256 i = 0; i < pendingVotes.length; i++) {
             address voter = pendingVotes[i];
-            if(voter != address(0) && slotNumber == keccak256(abi.encode(voter, mappingSlotNumber))) {
+            if(voter != address(0) && slotNumber == keccak256(abi.encodePacked(keccak256(abi.encode(voter, mappingSlotNumber))))) {
                 _finalizeVote(proposalId, voter, uint96(uint256(value)));
                 delete pendingVotes[i];
                 break;

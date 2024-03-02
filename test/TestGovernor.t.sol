@@ -30,7 +30,7 @@ contract TestGovernor is Test {
 
         (,,,,,,,,,,uint256 l1CheckpointBlock) = governor.proposals(proposalId);
         emit log_uint(l1CheckpointBlock);
-        brevis.setOutput(l1CheckpointBlock, tokenAddress, keccak256(abi.encode(arr00.addr, MAPPING_SLOT_NUMBER)), bytes32(uint256(1000)));
+        brevis.setOutput(l1CheckpointBlock, tokenAddress, keccak256(abi.encodePacked(keccak256(abi.encode(arr00.addr, MAPPING_SLOT_NUMBER)))), bytes32(uint256(1000)));
 
         vm.roll(block.number + 10);
         vm.prank(arr00.addr);
@@ -55,7 +55,7 @@ contract TestGovernor is Test {
 
         (,,,,,,,,,,uint256 l1CheckpointBlock) = governor.proposals(proposalId);
         emit log_uint(l1CheckpointBlock);
-        brevis.setOutput(l1CheckpointBlock, tokenAddress, keccak256(abi.encode(arr00.addr, MAPPING_SLOT_NUMBER)), bytes32(uint256(1000)));
+        brevis.setOutput(l1CheckpointBlock, tokenAddress, keccak256(abi.encodePacked(keccak256(abi.encode(arr00.addr, MAPPING_SLOT_NUMBER)))), bytes32(uint256(1000)));
 
         vm.roll(block.number + 10);
         vm.prank(arr00.addr);
