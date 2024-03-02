@@ -26,11 +26,11 @@ contract TestGovernor is Test {
         targets[0] = arr00.addr;
 
         vm.prank(arr00.addr);
-        uint256 proposalId = governor.propose(targets, values, new string[](1), new bytes[](1), "I would love some eth");
+        uint256 proposalId = governor.propose(targets, values, new string[](1), new bytes[](1), "I would love some eth", 19341097);
 
-        (,,,uint256 startBlock,,,,,,) = governor.proposals(proposalId);
-        emit log_uint(startBlock);
-        brevis.setOutput(startBlock, tokenAddress, keccak256(abi.encode(arr00.addr, MAPPING_SLOT_NUMBER)), bytes32(uint256(1000)));
+        (,,,,,,,,,,uint256 l1CheckpointBlock) = governor.proposals(proposalId);
+        emit log_uint(l1CheckpointBlock);
+        brevis.setOutput(l1CheckpointBlock, tokenAddress, keccak256(abi.encode(arr00.addr, MAPPING_SLOT_NUMBER)), bytes32(uint256(1000)));
 
         vm.roll(block.number + 10);
         vm.prank(arr00.addr);
@@ -40,6 +40,6 @@ contract TestGovernor is Test {
     }
 
     function _getVotesFor(uint256 proposalId) internal view returns (uint256 forVotes) {
-        (,,,,,forVotes,,,,) = governor.proposals(proposalId);
+        (,,,,,forVotes,,,,,) = governor.proposals(proposalId);
     }
 }

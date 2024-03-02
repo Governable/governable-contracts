@@ -150,6 +150,8 @@ contract GovernorStorage {
 
         /// @notice Receipts of ballots for the entire set of voters
         mapping (address => Receipt) receipts;
+
+        uint256 l1CheckpointBlock;
     }
 
     /// @notice Ballot receipt record for a voter

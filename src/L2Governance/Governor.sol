@@ -68,18 +68,20 @@ contract Governor is GovernorStorage, GovernorEvents, BrevisApp, GovernableRelay
       * @param description String description of the proposal
       * @return Proposal id of new proposal
       */
-    function propose(address[] memory targets, uint[] memory values, string[] memory signatures, bytes[] memory calldatas, string memory description) public returns (uint) {
+    function propose(address[] memory targets, uint[] memory values, string[] memory signatures, bytes[] memory calldatas, string memory description, uint256 l1CheckpointBlock) public returns (uint) {
         // Allow addresses above proposal threshold and whitelisted addresses to propose
         // require(comp.getPriorVotes(msg.sender, sub256(block.number, 1)) > proposalThreshold || isWhitelisted(msg.sender), "GovernorBravo::propose: proposer votes below proposal threshold");
-        require(targets.length == values.length && targets.length == signatures.length && targets.length == calldatas.length, "GovernorBravo::propose: proposal function information arity mismatch");
-        require(targets.length != 0, "GovernorBravo::propose: must provide actions");
-        require(targets.length <= proposalMaxOperations, "GovernorBravo::propose: too many actions");
+        {
+            require(targets.length == values.length && targets.length == signatures.length && targets.length == calldatas.length, "GovernorBravo::propose: proposal function information arity mismatch");
+            require(targets.length != 0, "GovernorBravo::propose: must provide actions");
+            require(targets.length <= proposalMaxOperations, "GovernorBravo::propose: too many actions");
 
-        uint latestProposalId = latestProposalIds[msg.sender];
-        if (latestProposalId != 0) {
-          ProposalState proposersLatestProposalState = state(latestProposalId);
-          require(proposersLatestProposalState != ProposalState.Active, "GovernorBravo::propose: one live proposal per proposer, found an already active proposal");
-          require(proposersLatestProposalState != ProposalState.Pending, "GovernorBravo::propose: one live proposal per proposer, found an already pending proposal");
+            uint latestProposalId = latestProposalIds[msg.sender];
+            if (latestProposalId != 0) {
+            ProposalState proposersLatestProposalState = state(latestProposalId);
+            require(proposersLatestProposalState != ProposalState.Active, "GovernorBravo::propose: one live proposal per proposer, found an already active proposal");
+            require(proposersLatestProposalState != ProposalState.Pending, "GovernorBravo::propose: one live proposal per proposer, found an already pending proposal");
+            }
         }
 
         uint startBlock = add256(block.number, votingDelay);
@@ -109,9 +111,10 @@ contract Governor is GovernorStorage, GovernorEvents, BrevisApp, GovernableRelay
         newProposal.abstainVotes = 0;
         newProposal.canceled = false;
         newProposal.executed = false;
+        newProposal.l1CheckpointBlock = l1CheckpointBlock;
 
         latestProposalIds[newProposal.proposer] = newProposal.id;
-        blockToProposalId[startBlock] = newProposal.id; // Checkpointing block to proposalId
+        blockToProposalId[l1CheckpointBlock] = newProposal.id; // Checkpointing block to proposalId
 
         emit ProposalCreated(newProposal.id, msg.sender, targets, values, signatures, calldatas, startBlock, endBlock, description);
         return newProposal.id;
