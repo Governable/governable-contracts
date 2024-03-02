@@ -70,7 +70,7 @@ contract Governor is GovernorStorage, GovernorEvents, BrevisApp, GovernableRelay
         uint endBlock = add256(startBlock, votingPeriod);
 
         for(uint256 i = 0; i < targets.length; i++) {
-            if(abi.encode(signatures[i]).length != 0) {
+            if(bytes(signatures[i]).length != 0) {
                 calldatas[i] = abi.encodeWithSignature(signatures[i], calldatas[i]);
             }
         }
