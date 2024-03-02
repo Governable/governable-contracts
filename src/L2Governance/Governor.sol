@@ -12,26 +12,8 @@ contract Governor is GovernorStorage, GovernorEvents, BrevisApp, GovernableRelay
     /// @notice The name of this contract
     string public constant name = "Governor";
 
-    /// @notice The minimum setable proposal threshold
-    uint public constant MIN_PROPOSAL_THRESHOLD = 1000e18;
-
-    /// @notice The maximum setable proposal threshold
-    uint public constant MAX_PROPOSAL_THRESHOLD = 100000e18;
-
-    /// @notice The minimum setable voting period
-    uint public constant MIN_VOTING_PERIOD = 5760; // About 24 hours
-
-    /// @notice The max setable voting period
-    uint public constant MAX_VOTING_PERIOD = 80640; // About 2 weeks
-
-    /// @notice The min setable voting delay
-    uint public constant MIN_VOTING_DELAY = 1;
-
-    /// @notice The max setable voting delay
-    uint public constant MAX_VOTING_DELAY = 40320; // About 1 week
-
     /// @notice The number of votes in support of a proposal required in order for a quorum to be reached and for a vote to succeed
-    uint public constant quorumVotes = 400000e18;
+    uint public constant quorumVotes = 1000;
 
     /// @notice The maximum number of actions that can be included in a proposal
     uint public constant proposalMaxOperations = 10; // 10 actions
@@ -121,31 +103,11 @@ contract Governor is GovernorStorage, GovernorEvents, BrevisApp, GovernableRelay
     }
 
     /**
-      * @notice Queues a proposal of state succeeded
-      * @param proposalId The id of the proposal to queue
-      */
-    function queue(uint proposalId) external {
-        require(state(proposalId) == ProposalState.Succeeded, "GovernorBravo::queue: proposal can only be queued if it is succeeded");
-        Proposal storage proposal = proposals[proposalId];
-        uint eta = add256(block.timestamp, timelock.delay());
-        for (uint i = 0; i < proposal.targets.length; i++) {
-            queueOrRevertInternal(proposal.targets[i], proposal.values[i], proposal.signatures[i], proposal.calldatas[i], eta);
-        }
-        proposal.eta = eta;
-        emit ProposalQueued(proposalId, eta);
-    }
-
-    function queueOrRevertInternal(address target, uint value, string memory signature, bytes memory data, uint eta) internal {
-        require(!timelock.queuedTransactions(keccak256(abi.encode(target, value, signature, data, eta))), "GovernorBravo::queueOrRevertInternal: identical proposal action already queued at eta");
-        timelock.queueTransaction(target, value, signature, data, eta);
-    }
-
-    /**
       * @notice Executes a queued proposal if eta has passed
       * @param proposalId The id of the proposal to execute
       */
     function execute(uint proposalId) external payable {
-        require(state(proposalId) == ProposalState.Queued, "GovernorBravo::execute: proposal can only be executed if it is queued");
+        require(state(proposalId) == ProposalState.Queued || state(proposalId) == ProposalState.Succeeded, "GovernorBravo::execute: proposal can only be executed if it is queued");
         Proposal storage proposal = proposals[proposalId];
         proposal.executed = true;
 
@@ -166,9 +128,6 @@ contract Governor is GovernorStorage, GovernorEvents, BrevisApp, GovernableRelay
         require(msg.sender == proposal.proposer, "Not proposer");
 
         proposal.canceled = true;
-        for (uint i = 0; i < proposal.targets.length; i++) {
-            timelock.cancelTransaction(proposal.targets[i], proposal.values[i], proposal.signatures[i], proposal.calldatas[i], proposal.eta);
-        }
 
         emit ProposalCanceled(proposalId);
     }
@@ -216,8 +175,6 @@ contract Governor is GovernorStorage, GovernorEvents, BrevisApp, GovernableRelay
             return ProposalState.Succeeded;
         } else if (proposal.executed) {
             return ProposalState.Executed;
-        } else if (block.timestamp >= add256(proposal.eta, timelock.GRACE_PERIOD())) {
-            return ProposalState.Expired;
         } else {
             return ProposalState.Queued;
         }
@@ -270,7 +227,6 @@ contract Governor is GovernorStorage, GovernorEvents, BrevisApp, GovernableRelay
       */
     function _setVotingDelay(uint newVotingDelay) external {
         require(msg.sender == admin, "GovernorBravo::_setVotingDelay: admin only");
-        require(newVotingDelay >= MIN_VOTING_DELAY && newVotingDelay <= MAX_VOTING_DELAY, "GovernorBravo::_setVotingDelay: invalid voting delay");
         uint oldVotingDelay = votingDelay;
         votingDelay = newVotingDelay;
 
@@ -283,7 +239,6 @@ contract Governor is GovernorStorage, GovernorEvents, BrevisApp, GovernableRelay
       */
     function _setVotingPeriod(uint newVotingPeriod) external {
         require(msg.sender == admin, "GovernorBravo::_setVotingPeriod: admin only");
-        require(newVotingPeriod >= MIN_VOTING_PERIOD && newVotingPeriod <= MAX_VOTING_PERIOD, "GovernorBravo::_setVotingPeriod: invalid voting period");
         uint oldVotingPeriod = votingPeriod;
         votingPeriod = newVotingPeriod;
 
@@ -297,7 +252,6 @@ contract Governor is GovernorStorage, GovernorEvents, BrevisApp, GovernableRelay
       */
     function _setProposalThreshold(uint newProposalThreshold) external {
         require(msg.sender == admin, "GovernorBravo::_setProposalThreshold: admin only");
-        require(newProposalThreshold >= MIN_PROPOSAL_THRESHOLD && newProposalThreshold <= MAX_PROPOSAL_THRESHOLD, "GovernorBravo::_setProposalThreshold: invalid proposal threshold");
         uint oldProposalThreshold = proposalThreshold;
         proposalThreshold = newProposalThreshold;
 

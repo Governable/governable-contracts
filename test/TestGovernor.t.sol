@@ -37,6 +37,11 @@ contract TestGovernor is Test {
         governor.castVote(proposalId, 1, bytes32(uint256(2)));
 
         assertEq(_getVotesFor(proposalId), 1000);
+
+        vm.roll(block.number + 100);
+
+        vm.expectRevert();
+        governor.execute(proposalId);
     }
 
     function testVote_force() public {

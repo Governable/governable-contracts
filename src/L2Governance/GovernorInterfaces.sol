@@ -75,9 +75,6 @@ contract GovernorStorage {
     /// @notice The total number of proposals
     uint public proposalCount;
 
-    /// @notice The address of the Compound Protocol Timelock
-    TimelockInterface public timelock;
-
     /// @notice Governance token used for voting
     address public govToken;
 
