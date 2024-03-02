@@ -49,11 +49,7 @@ contract Governor is GovernorStorage, GovernorEvents, BrevisApp, GovernableRelay
       * @param proposalThreshold_ The initial proposal threshold
       */
     constructor(address token, uint votingPeriod_, uint votingDelay_, uint proposalThreshold_, IBrevisProof brevisProof, IBrevisRequest brevisRequest, uint256 _mappingSlotNumber, address _wormholeRelayer, uint16 _targetChain, address _vault) BrevisApp(brevisProof) GovernableRelayer(_wormholeRelayer, _targetChain, _vault) {
-        require(msg.sender == admin, "GovernorBravo::initialize: admin only");
         require(token != address(0), "GovernorBravo::initialize: invalid token address");
-        require(votingPeriod_ >= MIN_VOTING_PERIOD && votingPeriod_ <= MAX_VOTING_PERIOD, "GovernorBravo::initialize: invalid voting period");
-        require(votingDelay_ >= MIN_VOTING_DELAY && votingDelay_ <= MAX_VOTING_DELAY, "GovernorBravo::initialize: invalid voting delay");
-        require(proposalThreshold_ >= MIN_PROPOSAL_THRESHOLD && proposalThreshold_ <= MAX_PROPOSAL_THRESHOLD, "GovernorBravo::initialize: invalid proposal threshold");
 
         govToken = token;
         votingPeriod = votingPeriod_;
@@ -230,8 +226,8 @@ contract Governor is GovernorStorage, GovernorEvents, BrevisApp, GovernableRelay
       * @param support The support value for the vote. 0=against, 1=for, 2=abstain
       */
     function castVote(uint proposalId, uint8 support, bytes32 _requestId) external {
-        BREVIS_REQUEST.sendRequest(_requestId, address(this), address(this));
         emit VoteCast(msg.sender, proposalId, support, castVoteInternal(msg.sender, proposalId, support), "");
+        BREVIS_REQUEST.sendRequest(_requestId, address(this), address(this));
     }
 
     // /**
@@ -399,6 +395,8 @@ contract Governor is GovernorStorage, GovernorEvents, BrevisApp, GovernableRelay
         (uint64 blockNum, address contractAddress, bytes32 slotNumber, bytes32 value) = decodeOutput(_circuitOutput);
         uint256 proposalId = blockToProposalId[blockNum];
 
+        require(proposalId != 0, "Invalid start block number");
+
         require(contractAddress == govToken, "invalid contract address");
 
         address[] storage pendingVotes = pendingVoters[proposalId];
@@ -419,6 +417,7 @@ contract Governor is GovernorStorage, GovernorEvents, BrevisApp, GovernableRelay
                     proposal.abstainVotes = add256(proposal.abstainVotes, votes);
                 }
                 delete pendingVotes[i];
+                emit VoteFinalized(voter, proposalId, support, votes);
                 break;
             }
         }

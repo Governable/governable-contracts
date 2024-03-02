@@ -10,7 +10,7 @@ contract MockBrevis is IBrevisProof, IBrevisRequest {
     bytes public appCircuitOutput;
 
     function setOutput(uint256 blockNumber, address contractAddress, bytes32 slot, bytes32 slotValue) external {
-        appCircuitOutput = abi.encodePacked(blockNumber, contractAddress, slot, slotValue);
+        appCircuitOutput = abi.encodePacked(uint64(blockNumber), contractAddress, slot, slotValue);
     }
     
     function submitProof(

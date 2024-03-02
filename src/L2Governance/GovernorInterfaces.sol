@@ -17,6 +17,8 @@ contract GovernorEvents {
     /// @param reason The reason given for the vote by the voter
     event VoteCast(address indexed voter, uint proposalId, uint8 support, uint votes, string reason);
 
+    event VoteFinalized(address indexed voter, uint proposalId, uint8 support, uint votes);
+
     /// @notice An event emitted when a proposal has been canceled
     event ProposalCanceled(uint id);
 
@@ -95,7 +97,7 @@ contract GovernorStorage {
 
     IBrevisRequest public BREVIS_REQUEST;
 
-    mapping(uint256 proposalId => address[]) pendingVoters;
+    mapping(uint256 proposalId => address[]) public pendingVoters;
 
     mapping(uint256 blockNumber => uint256 proposalId) public blockToProposalId;
 
