@@ -39,6 +39,33 @@ contract TestGovernor is Test {
         assertEq(_getVotesFor(proposalId), 1000);
     }
 
+    function testVote_force() public {
+        brevis.setDoCallback(false);
+
+        Vm.Wallet memory arr00 = vm.createWallet("arr00");
+
+        uint256[] memory values = new uint256[](1);
+        values[0] = 0.01 ether;
+
+        address[] memory targets = new address[](1);
+        targets[0] = arr00.addr;
+
+        vm.prank(arr00.addr);
+        uint256 proposalId = governor.propose(targets, values, new string[](1), new bytes[](1), "I would love some eth", 19341097);
+
+        (,,,,,,,,,,uint256 l1CheckpointBlock) = governor.proposals(proposalId);
+        emit log_uint(l1CheckpointBlock);
+        brevis.setOutput(l1CheckpointBlock, tokenAddress, keccak256(abi.encode(arr00.addr, MAPPING_SLOT_NUMBER)), bytes32(uint256(1000)));
+
+        vm.roll(block.number + 10);
+        vm.prank(arr00.addr);
+        governor.castVote(proposalId, 1, bytes32(uint256(2)));
+
+        governor.finalizeVote(1, arr00.addr, 1000);
+
+        assertEq(_getVotesFor(proposalId), 1000);
+    }
+
     function _getVotesFor(uint256 proposalId) internal view returns (uint256 forVotes) {
         (,,,,,forVotes,,,,,) = governor.proposals(proposalId);
     }

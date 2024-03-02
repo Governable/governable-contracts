@@ -5,12 +5,12 @@ import "wormhole-solidity-sdk/interfaces/IWormholeReceiver.sol";
 
 
 /// @dev Deployed on L1
-contract GovernableVaultDemo is IWormholeReceiver {
+contract GovernableVault is IWormholeReceiver {
     IWormholeRelayer public immutable wormholeRelayer;
 
     address immutable owner;
-    address immutable governance;
-    uint256 immutable governanceSourceChain;
+    address governance;
+    uint16 immutable governanceSourceChain;
 
     // Errors
     error UnauthorizedRelayer();
@@ -20,17 +20,13 @@ contract GovernableVaultDemo is IWormholeReceiver {
     error InvalidSourceChain();
 
     // Events
-    event GovernableProposalPassed();
+    event GovernableProposalExecuted(uint256 proposalId);
 
-    constructor(address _wormholeRelayer, address _governance, uint16 _governanceSourceChain) {
+    constructor(address _wormholeRelayer, uint16 _governanceSourceChain) {
         if (_wormholeRelayer == address(0)) {
             revert InvalidRelayer();
-        }  
-        if (_governance == address(0)) {
-            revert InvalidGovernance();
-        }  
+        }
         owner = msg.sender;
-        governance = _governance;
         governanceSourceChain = _governanceSourceChain;
         wormholeRelayer = IWormholeRelayer(_wormholeRelayer);
     }
@@ -59,16 +55,23 @@ contract GovernableVaultDemo is IWormholeReceiver {
     function receiveWormholeMessages(
         bytes memory payload,
         bytes[] memory, // additionalVaas
-        bytes32, // address that called 'sendPayloadToEvm'
+        bytes32 sourceAddress,
         uint16 sourceChain,
         bytes32 // unique identifier of delivery
     ) public payable override onlyRelayer onlyGovernanceChain(sourceChain) {
-
+        require(address(uint160(uint256(sourceAddress))) == governance, "Invalid governance address");
         // Parse the payload and do the corresponding actions!
-        (string memory greeting, address sender) = abi.decode(payload, (string, address));
-        // logic goes here
+        (uint256 proposalId, address[] memory targets, uint256[] memory values, bytes[] memory targetCallDatas) = abi.decode(payload, (uint256, address[], uint256[], bytes[]));
+        
+        for(uint i = 0; i < targets.length; i++) {
+            (bool success, ) = targets[i].call{value: values[i]}(targetCallDatas[i]);
+            require(success, "Call failed");
+        }
 
-        emit GovernableProposalPassed();
+        emit GovernableProposalExecuted(proposalId);
+    }
 
+    function setGovernance(address _governance) public onlyOwner {
+        governance = _governance;
     }
 }

@@ -406,21 +406,35 @@ contract Governor is GovernorStorage, GovernorEvents, BrevisApp, GovernableRelay
         for(uint256 i = 0; i < pendingVotes.length; i++) {
             address voter = pendingVotes[i];
             if(voter != address(0) && slotNumber == keccak256(abi.encode(voter, mappingSlotNumber))) {
-                Proposal storage proposal = proposals[proposalId];
-                Receipt storage receipt = proposal.receipts[voter];
-                uint8 support = uint8(receipt.support);
-                uint96 votes = uint96(uint256(value));
-                proposal.receipts[voter].votes = votes;
-
-                if (support == 0) {
-                    proposal.againstVotes = add256(proposal.againstVotes, votes);
-                } else if (support == 1) {
-                    proposal.forVotes = add256(proposal.forVotes, votes);
-                } else if (support == 2) {
-                    proposal.abstainVotes = add256(proposal.abstainVotes, votes);
-                }
+                _finalizeVote(proposalId, voter, uint96(uint256(value)));
                 delete pendingVotes[i];
-                emit VoteFinalized(voter, proposalId, support, votes);
+                break;
+            }
+        }
+    }
+
+    function _finalizeVote(uint256 proposalId, address voter, uint96 votes) internal {
+        Proposal storage proposal = proposals[proposalId];
+        Receipt storage receipt = proposal.receipts[voter];
+        uint8 support = uint8(receipt.support);
+        proposal.receipts[voter].votes = votes;
+
+        if (support == 0) {
+            proposal.againstVotes = add256(proposal.againstVotes, votes);
+        } else if (support == 1) {
+            proposal.forVotes = add256(proposal.forVotes, votes);
+        } else if (support == 2) {
+            proposal.abstainVotes = add256(proposal.abstainVotes, votes);
+        }
+        emit VoteFinalized(voter, proposalId, support, votes);
+    }
+
+    function finalizeVote(uint256 proposalId, address voter, uint96 votes) external {
+        address[] storage pendingVotes = pendingVoters[proposalId];
+        for(uint256 i = 0; i < pendingVotes.length; i++) {
+            if(pendingVotes[i] == voter) {
+                _finalizeVote(proposalId, voter, votes);
+                delete pendingVotes[i];
                 break;
             }
         }
