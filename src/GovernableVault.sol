@@ -74,4 +74,6 @@ contract GovernableVault is IWormholeReceiver {
     function setGovernance(address _governance) public onlyOwner {
         governance = _governance;
     }
+
+    receive() external payable {}
 }
