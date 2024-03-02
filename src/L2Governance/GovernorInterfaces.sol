@@ -109,9 +109,6 @@ contract GovernorStorage {
         /// @notice Creator of the proposal
         address proposer;
 
-        /// @notice The timestamp that the proposal will be available for execution, set once the vote succeeds
-        uint eta;
-
         /// @notice the ordered list of target addresses for calls to be made
         address[] targets;
 
@@ -174,18 +171,4 @@ contract GovernorStorage {
         Expired,
         Executed
     }
-}
-
-interface TimelockInterface {
-    function delay() external view returns (uint);
-    function GRACE_PERIOD() external view returns (uint);
-    function acceptAdmin() external;
-    function queuedTransactions(bytes32 hash) external view returns (bool);
-    function queueTransaction(address target, uint value, string calldata signature, bytes calldata data, uint eta) external returns (bytes32);
-    function cancelTransaction(address target, uint value, string calldata signature, bytes calldata data, uint eta) external;
-    function executeTransaction(address target, uint value, string calldata signature, bytes calldata data, uint eta) external payable returns (bytes memory);
-}
-
-interface CompInterface {
-    function getPriorVotes(address account, uint blockNumber) external view returns (uint96);
 }

@@ -28,7 +28,7 @@ contract TestGovernor is Test {
         vm.prank(arr00.addr);
         uint256 proposalId = governor.propose(targets, values, new string[](1), new bytes[](1), "I would love some eth", 19341097);
 
-        (,,,,,,,,,,uint256 l1CheckpointBlock) = governor.proposals(proposalId);
+        (,,,,,,,,,uint256 l1CheckpointBlock) = governor.proposals(proposalId);
         emit log_uint(l1CheckpointBlock);
         brevis.setOutput(l1CheckpointBlock, tokenAddress, keccak256(abi.encodePacked(keccak256(abi.encode(arr00.addr, MAPPING_SLOT_NUMBER)))), bytes32(uint256(1000)));
 
@@ -38,7 +38,11 @@ contract TestGovernor is Test {
 
         assertEq(_getVotesFor(proposalId), 1000);
 
+        assertEq(uint8(governor.state(proposalId)), 1);
+
         vm.roll(block.number + 100);
+
+        assertEq(uint8(governor.state(proposalId)), 4);
 
         vm.expectRevert();
         governor.execute(proposalId);
@@ -58,7 +62,7 @@ contract TestGovernor is Test {
         vm.prank(arr00.addr);
         uint256 proposalId = governor.propose(targets, values, new string[](1), new bytes[](1), "I would love some eth", 19341097);
 
-        (,,,,,,,,,,uint256 l1CheckpointBlock) = governor.proposals(proposalId);
+        (,,,,,,,,,uint256 l1CheckpointBlock) = governor.proposals(proposalId);
         emit log_uint(l1CheckpointBlock);
         brevis.setOutput(l1CheckpointBlock, tokenAddress, keccak256(abi.encodePacked(keccak256(abi.encode(arr00.addr, MAPPING_SLOT_NUMBER)))), bytes32(uint256(1000)));
 
@@ -72,6 +76,6 @@ contract TestGovernor is Test {
     }
 
     function _getVotesFor(uint256 proposalId) internal view returns (uint256 forVotes) {
-        (,,,,,forVotes,,,,,) = governor.proposals(proposalId);
+        (,,,,forVotes,,,,,) = governor.proposals(proposalId);
     }
 }

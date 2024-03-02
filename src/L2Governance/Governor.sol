@@ -82,7 +82,6 @@ contract Governor is GovernorStorage, GovernorEvents, BrevisApp, GovernableRelay
         require(newProposal.id == 0, "GovernorBravo::propose: ProposalID collsion");
         newProposal.id = newProposalID;
         newProposal.proposer = msg.sender;
-        newProposal.eta = 0;
         newProposal.targets = targets;
         newProposal.values = values;
         newProposal.calldatas = calldatas;
@@ -171,12 +170,10 @@ contract Governor is GovernorStorage, GovernorEvents, BrevisApp, GovernableRelay
             return ProposalState.Active;
         } else if (proposal.forVotes <= proposal.againstVotes || proposal.forVotes < quorumVotes) {
             return ProposalState.Defeated;
-        } else if (proposal.eta == 0) {
-            return ProposalState.Succeeded;
         } else if (proposal.executed) {
             return ProposalState.Executed;
         } else {
-            return ProposalState.Queued;
+            return ProposalState.Succeeded;
         }
     }
 
